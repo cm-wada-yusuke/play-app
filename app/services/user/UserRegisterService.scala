@@ -8,11 +8,12 @@ import domains.error.RegisterConflictError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Failure
 
 class UserRegisterService @Inject()(
-    lockComponent: RegisterLockComponent,
-    userRepository: UserRepository,
-    pointRepository: PointRepository
+  lockComponent: RegisterLockComponent,
+  userRepository: UserRepository,
+  pointRepository: PointRepository
 ) {
 
   def register(userName: String): Future[(String, Int)] = {
@@ -23,12 +24,18 @@ class UserRegisterService @Inject()(
       sessionId <- userRepository.register(userId, userName)
       userPoint <- pointRepository.append(bonusPoint)
     } yield (sessionId, userPoint)
-    result.onComplete(_ => lockComponent.unlock(userName))
+
+    result.onComplete {
+      case Failure(e: RegisterConflictError) => ()
+      case _ => lockComponent.unlock(userName)
+
+    }
+
     result
   }
 
-  private def lock(userId: String): Either[RegisterConflictError, Unit] =
-    lockComponent.lock(userId).left.map {
-      _: IllegalStateException => new RegisterConflictError
+  private def lock(userName: String): Either[RegisterConflictError, Unit] =
+    lockComponent.lock(userName).left.map {
+      _ => new RegisterConflictError()
     }
 }
