@@ -6,6 +6,7 @@ import com.redis.RedisClientPool
 import infrastructures.common.RedisJsonAdapter
 import infrastructures.user.config.RegisterLockDaoConfig
 import play.api.libs.json._
+import services.user.RegisterLockComponent
 
 
 class RegisterLockDao @Inject()(

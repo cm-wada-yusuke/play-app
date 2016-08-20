@@ -1,4 +1,4 @@
-package infrastructures.user
+package services.user
 
 trait RegisterLockComponent {
 

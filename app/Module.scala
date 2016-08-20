@@ -3,7 +3,11 @@ import javax.inject.Named
 
 import com.google.inject.{ AbstractModule, Provides, Singleton }
 import com.redis.RedisClientPool
+import infrastructures.point.PointDao
+import infrastructures.user.config.RegisterLockDaoConfig
+import infrastructures.user.{ RegisterLockDao, UserDao }
 import play.api.Configuration
+import services.user.{ PointRepository, RegisterLockComponent, UserRepository }
 import services.{ ApplicationTimer, AtomicCounter, Counter }
 
 /**
@@ -26,7 +30,16 @@ class Module extends AbstractModule {
     bind(classOf[ApplicationTimer]).asEagerSingleton()
     // Set AtomicCounter as the implementation for Counter.
     bind(classOf[Counter]).to(classOf[AtomicCounter])
+
+    bind(classOf[RegisterLockComponent]).to(classOf[RegisterLockDao])
+    bind(classOf[UserRepository]).to(classOf[UserDao])
+    bind(classOf[PointRepository]).to(classOf[PointDao])
   }
+
+  @Provides
+  @Singleton
+  def provideRegisterLockDaoConfig(configuration: Configuration): RegisterLockDaoConfig =
+    RegisterLockDaoConfig(configuration.getInt("redis.lock.ttl").get)
 
   @Provides
   @Singleton
