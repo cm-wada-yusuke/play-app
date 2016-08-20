@@ -19,11 +19,11 @@ class UserRegisterService @Inject()(
     val userId = UUID.randomUUID().toString
     val bonusPoint = 100
     val result = for {
-      _ <- FutureSupport.eitherToFuture(lock(userId))
+      _ <- FutureSupport.eitherToFuture(lock(userName))
       sessionId <- userRepository.register(userId, userName)
       userPoint <- pointRepository.append(bonusPoint)
     } yield (sessionId, userPoint)
-    result.onComplete(_ => lockComponent.unlock(userId))
+    result.onComplete(_ => lockComponent.unlock(userName))
     result
   }
 

@@ -6,8 +6,11 @@ import services.user.UserRepository
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class UserDao @Inject()(ec: ExecutionContext) extends UserRepository {
+class UserDao @Inject()(implicit ec: ExecutionContext) extends UserRepository {
 
-  override def register(id: String, name: String): Future[String] = Future.successful("fasf12dasv")
+  override def register(id: String, name: String): Future[String] = Future {
+    Thread.sleep(1000)
+    "fasf12dasv"
+  }
 
 }
