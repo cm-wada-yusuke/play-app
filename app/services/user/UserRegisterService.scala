@@ -4,6 +4,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 import core.util.FutureSupport
+import domains.error.RegisterConflictError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,11 +19,16 @@ class UserRegisterService @Inject()(
     val userId = UUID.randomUUID().toString
     val bonusPoint = 100
     val result = for {
-      _ <- FutureSupport.eitherToFuture(lockComponent.lock(userId))
+      _ <- FutureSupport.eitherToFuture(lock(userId))
       sessionId <- userRepository.register(userId, userName)
       userPoint <- pointRepository.append(bonusPoint)
     } yield (sessionId, userPoint)
     result.onComplete(_ => lockComponent.unlock(userId))
     result
   }
+
+  private def lock(userId: String): Either[RegisterConflictError, Unit] =
+    lockComponent.lock(userId).left.map {
+      _: IllegalStateException => new RegisterConflictError
+    }
 }

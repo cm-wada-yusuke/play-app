@@ -1,6 +1,6 @@
 package controllers
 
-import domains.UserInfo
+import domains.user.UserInfo
 import play.api.libs.json.{ JsPath, Reads }
 
 object RequestConverter {
