@@ -6,7 +6,7 @@ import services.user.PointRepository
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class PointDao @Inject()(implicit ec: ExecutionContext) extends PointRepository {
+class PointClinet @Inject()(implicit ec: ExecutionContext) extends PointRepository {
   override def append(point: Int): Future[Int] = Future {
     Thread.sleep(1000)
     100

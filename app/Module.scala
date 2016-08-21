@@ -3,7 +3,7 @@ import javax.inject.Named
 
 import com.google.inject.{ AbstractModule, Provides, Singleton }
 import com.redis.RedisClientPool
-import infrastructures.point.PointDao
+import infrastructures.point.PointClinet
 import infrastructures.user.config.RegisterLockDaoConfig
 import infrastructures.user.{ RegisterLockDao, UserDao }
 import play.api.Configuration
@@ -33,7 +33,7 @@ class Module extends AbstractModule {
 
     bind(classOf[RegisterLockComponent]).to(classOf[RegisterLockDao])
     bind(classOf[UserRepository]).to(classOf[UserDao])
-    bind(classOf[PointRepository]).to(classOf[PointDao])
+    bind(classOf[PointRepository]).to(classOf[PointClinet])
   }
 
   @Provides
