@@ -1,6 +1,6 @@
 package services.user
 
-import domains.error.RegisterConflictError
+import domains.error.{ AlreadyRegisteredError, RegisterConflictError }
 import org.specs2.matcher.Scope
 import org.specs2.mock.Mockito
 import play.api.test.PlaySpecification
@@ -16,13 +16,14 @@ class UserRegisterServiceSpec extends PlaySpecification with Mockito {
 
     val mockLockComponent = mock[RegisterLockComponent]
     val mockUserRepository = mock[UserRepository]
-    val mockPointRepository = mock[PointRepository]
+    val mockPointRepository = mock[CoinRepository]
 
     val service = new UserRegisterService(
-      mockLockComponent, mockUserRepository, mockPointRepository
+      mockUserRepository, mockLockComponent, mockPointRepository
     )
 
     mockLockComponent.lock(anyString) returns Right(())
+    mockUserRepository.findByName(anyString) returns Future.successful(None)
     mockUserRepository.register(anyString, anyString) returns Future.successful(mockSessionId)
     mockPointRepository.append(anyInt) returns Future.successful(15)
   }
@@ -45,12 +46,39 @@ class UserRegisterServiceSpec extends PlaySpecification with Mockito {
         await(result) must not(throwA[Throwable])
 
         there was
-          one(mockLockComponent).lock(anyString) andThen
-          one(mockUserRepository).register(anyString, anyString) andThen
-          one(mockPointRepository).append(anyInt) andThen
-          one(mockLockComponent).unlock(anyString)
+            one(mockLockComponent).lock(anyString) andThen
+            one(mockUserRepository).register(anyString, anyString) andThen
+            one(mockPointRepository).append(anyInt) andThen
+            one(mockLockComponent).unlock(anyString)
       }
     }
+
+    "ユーザがすでに登録されている" should {
+
+      trait Before {
+        self: CommonBefore =>
+        mockUserRepository.findByName(anyString) returns Future.successful(Some("mockUserId"))
+      }
+
+      class Context extends CommonContext with Before
+
+      "AlreadyRegisteredErrorが発生" in new Context {
+        val result = service.register(mockUserName)
+        await(result) must throwA[AlreadyRegisteredError]
+      }
+
+      "ロック処理も、登録系処理は呼び出されない" in new Context {
+        val result = service.register(mockUserName)
+        await(result) must throwA[Throwable]
+
+        there was
+            no(mockLockComponent).lock(anyString) andThen
+            no(mockUserRepository).register(anyString, anyString) andThen
+            no(mockPointRepository).append(anyInt) andThen
+            no(mockLockComponent).unlock(anyString)
+      }
+    }
+
 
     "登録処理がロックされている" should {
 
@@ -71,10 +99,10 @@ class UserRegisterServiceSpec extends PlaySpecification with Mockito {
         await(result) must throwA[Throwable]
 
         there was
-          one(mockLockComponent).lock(anyString) andThen
-          no(mockUserRepository).register(anyString, anyString) andThen
-          no(mockPointRepository).append(anyInt) andThen
-          no(mockLockComponent).unlock(anyString)
+            one(mockLockComponent).lock(anyString) andThen
+            no(mockUserRepository).register(anyString, anyString) andThen
+            no(mockPointRepository).append(anyInt) andThen
+            no(mockLockComponent).unlock(anyString)
       }
     }
 
@@ -92,10 +120,10 @@ class UserRegisterServiceSpec extends PlaySpecification with Mockito {
         await(result) must throwA[Throwable]
 
         there was
-          one(mockLockComponent).lock(anyString) andThen
-          one(mockUserRepository).register(anyString, anyString) andThen
-          no(mockPointRepository).append(anyInt) andThen
-          one(mockLockComponent).unlock(anyString)
+            one(mockLockComponent).lock(anyString) andThen
+            one(mockUserRepository).register(anyString, anyString) andThen
+            no(mockPointRepository).append(anyInt) andThen
+            one(mockLockComponent).unlock(anyString)
       }
     }
 
@@ -113,10 +141,10 @@ class UserRegisterServiceSpec extends PlaySpecification with Mockito {
         await(result) must throwA[Throwable]
 
         there was
-          one(mockLockComponent).lock(anyString) andThen
-          one(mockUserRepository).register(anyString, anyString) andThen
-          one(mockPointRepository).append(anyInt) andThen
-          one(mockLockComponent).unlock(anyString)
+            one(mockLockComponent).lock(anyString) andThen
+            one(mockUserRepository).register(anyString, anyString) andThen
+            one(mockPointRepository).append(anyInt) andThen
+            one(mockLockComponent).unlock(anyString)
       }
     }
   }

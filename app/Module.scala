@@ -3,11 +3,11 @@ import javax.inject.Named
 
 import com.google.inject.{ AbstractModule, Provides, Singleton }
 import com.redis.RedisClientPool
-import infrastructures.point.PointClinet
+import infrastructures.point.CoinClinet
 import infrastructures.user.config.RegisterLockDaoConfig
 import infrastructures.user.{ RegisterLockDao, UserDao }
 import play.api.Configuration
-import services.user.{ PointRepository, RegisterLockComponent, UserRepository }
+import services.user.{ CoinRepository, RegisterLockComponent, UserRepository }
 import services.{ ApplicationTimer, AtomicCounter, Counter }
 
 /**
@@ -33,7 +33,7 @@ class Module extends AbstractModule {
 
     bind(classOf[RegisterLockComponent]).to(classOf[RegisterLockDao])
     bind(classOf[UserRepository]).to(classOf[UserDao])
-    bind(classOf[PointRepository]).to(classOf[PointClinet])
+    bind(classOf[CoinRepository]).to(classOf[CoinClinet])
   }
 
   @Provides
