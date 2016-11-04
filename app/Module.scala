@@ -1,13 +1,20 @@
-import com.google.inject.AbstractModule
 import java.time.Clock
+import javax.inject.Named
 
-import services.{ApplicationTimer, AtomicCounter, Counter}
+import com.google.inject.{ AbstractModule, Provides, Singleton }
+import com.redis.RedisClientPool
+import infrastructures.point.CoinClinet
+import infrastructures.user.config.RegisterLockDaoConfig
+import infrastructures.user.{ RegisterLockDao, UserDao }
+import play.api.Configuration
+import services.user.{ CoinRepository, RegisterLockComponent, UserRepository }
+import services.{ ApplicationTimer, AtomicCounter, Counter }
 
 /**
  * This class is a Guice module that tells Guice how to bind several
  * different types. This Guice module is created when the Play
  * application starts.
-
+ *
  * Play will automatically use any class called `Module` that is in
  * the root package. You can create modules in other locations by
  * adding `play.modules.enabled` settings to the `application.conf`
@@ -23,6 +30,28 @@ class Module extends AbstractModule {
     bind(classOf[ApplicationTimer]).asEagerSingleton()
     // Set AtomicCounter as the implementation for Counter.
     bind(classOf[Counter]).to(classOf[AtomicCounter])
+
+    bind(classOf[RegisterLockComponent]).to(classOf[RegisterLockDao])
+    bind(classOf[UserRepository]).to(classOf[UserDao])
+    bind(classOf[CoinRepository]).to(classOf[CoinClinet])
   }
 
+  @Provides
+  @Singleton
+  def provideRegisterLockDaoConfig(configuration: Configuration): RegisterLockDaoConfig =
+    RegisterLockDaoConfig(configuration.getInt("redis.lock.ttl").get)
+
+  @Provides
+  @Singleton
+  @Named("register_lock")
+  def provideLockRedisClientPool(configuration: Configuration): RedisClientPool =
+    generateRedisClientPool(configuration, configuration.getInt("redis.dbNumber.lock").get)
+
+  private def generateRedisClientPool(configuration: Configuration, databaseNumber: Int): RedisClientPool =
+    new RedisClientPool(
+      configuration.getString("redis.host").get,
+      configuration.getInt("redis.port").get,
+      database = databaseNumber
+    )
 }
+
